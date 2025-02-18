@@ -256,24 +256,36 @@ class Pye3DPlugin(PupilDetectorPlugin):
                 break
 
         # 3) 만약 없다면 RITnet 기반 2D 검출 수행
-        if datum_2d is None:
-            datum_2d = self._perform_ritnet_2d(frame)
-            if datum_2d is None:
-                logger.warning(
-                    "RITnet-based 2D detection failed. Returning default pye3d datum."
-                )
-                return self.create_pupil_datum(
-                    norm_pos=[0.5, 0.5],
-                    diameter=0.0,
-                    confidence=0.0,
-                    timestamp=frame.timestamp,
-                )
-                # gaze mapping에서 요구하는 추가 키들을 기본값으로 설정
-                default_datum["model_confidence"] = 0.0
-                default_datum["projected_sphere"] = {"axes": (0.0, 0.0), "angle": 0.0, "center": (0.0, 0.0)}
-                default_datum["sphere"] = {"axes": (0.0, 0.0), "angle": 0.0, "center": (0.0, 0.0)}
-                default_datum["circle_3d"] = {"normal": (0.0, 0.0, 1.0)}
-                return default_datum
+        # if datum_2d is None:
+        #     datum_2d = self._perform_ritnet_2d(frame)
+        #     if datum_2d is None:
+        #         logger.warning(
+        #             "RITnet-based 2D detection failed. Returning default pye3d datum."
+        #         )
+        #         return self.create_pupil_datum(
+        #             norm_pos=[0.5, 0.5],
+        #             diameter=0.0,
+        #             confidence=0.0,
+        #             timestamp=frame.timestamp,
+        #         )
+        #         # gaze mapping에서 요구하는 추가 키들을 기본값으로 설정
+        #         default_datum["model_confidence"] = 0.0
+        #         default_datum["projected_sphere"] = {"axes": (0.0, 0.0), "angle": 0.0, "center": (0.0, 0.0)}
+        #         default_datum["sphere"] = {"axes": (0.0, 0.0), "angle": 0.0, "center": (0.0, 0.0)}
+        #         default_datum["circle_3d"] = {"normal": (0.0, 0.0, 1.0)}
+        #         return default_datum
+
+        else:
+            logger.warning(
+                        "Required 2d pupil detection input not available. "
+                        "Returning default pye3d datum."
+                    )
+            return self.create_pupil_datum(
+                        norm_pos=[0.5, 0.5],
+                        diameter=0.0,
+                        confidence=0.0,
+                        timestamp=frame.timestamp,
+                    )
 
 
         # 4) 3D 업데이트: 2D datum와 frame.gray를 이용해 3D 모델 업데이트 및 결과 추정
