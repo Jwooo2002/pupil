@@ -1,4 +1,4 @@
-# Pupil
+# Pupil + RITnet(detect)
 <a
 href="https://pupil-labs.com"
 rel="noopener"
