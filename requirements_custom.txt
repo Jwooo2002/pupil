@@ -1,0 +1,49 @@
+# Core Deep Learning (PyTorch)
+# IMPORTANT: For NVIDIA RTX 5080 (Blackwell), you need PyTorch built with CUDA 12.8 or higher.
+# You may need to install this manually via conda or use the --extra-index-url for pip if the default
+# pypi version does not yet bundle CUDA 12.8+.
+# Example: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+torch>=2.7.0
+torchvision>=0.18.0
+
+# Event-based Vision (DVS)
+dv-processing
+tonic
+
+# Computer Vision & Image Processing
+opencv-python
+numpy>=1.20.0
+Pillow
+scikit-learn
+scipy
+pupil-apriltags==1.0.*
+pupil-detectors>=2.0.2rc2
+
+# Pupil Labs Core & UI
+pyglui>=1.31.1b1
+pye3d>=0.3.2
+pupil-labs-uvc
+ndsi==1.4.*
+glfw>=2.0.0
+pyopengl
+
+# Networking & IPC
+pyzmq
+zeromq-pyre>=0.3.4
+msgpack>=1.0.0
+
+# Audio & Media
+av
+sounddevice
+
+# Utilities & System
+click
+numexpr
+packaging>=20.0,<22
+psutil
+rich
+typing_extensions>=4.1.0
+
+# Platform Specific
+cysignals ; platform_system != "Windows"
+win_inet_pton ; platform_system == "Windows"
