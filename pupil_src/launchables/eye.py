@@ -277,7 +277,7 @@ def eye(
 
             glViewport(0, 0, *window_size)
             # render graphs
-            fps_graph.draw()
+            # fps_graph.draw()
             cpu_graph.draw()
 
             # render GUI
@@ -593,11 +593,12 @@ def eye(
         cpu_graph.update_rate = 5
         cpu_graph.label = "CPU %0.1f"
 
-        fps_graph = graph.Bar_Graph()
-        fps_graph.pos = (140, 50)
-        fps_graph.update_rate = 5
-        fps_graph.label = "%0.0f FPS"
-        g_pool.graphs = [cpu_graph, fps_graph]
+        # fps_graph = graph.Bar_Graph()
+        # fps_graph.pos = (140, 50)
+        # fps_graph.update_rate = 5
+        # fps_graph.label = "%0.0f FPS"
+        g_pool.graphs = [cpu_graph]
+        # g_pool.graphs = [cpu_graph, fps_graph]
 
         # set the last saved window size
         on_resize(main_window, *glfw.get_framebuffer_size(main_window))
@@ -749,7 +750,11 @@ def eye(
                 t = frame.timestamp
                 dt, ts = t - ts, t
                 try:
-                    fps_graph.add(1.0 / dt)
+                    pass
+                    # fps_graph.add(1.0 / dt)
+                    ######fps 속도 출력 #########
+                    # fps = 1.0 / dt
+                    # print(f"[Eye{eye_id}] {fps:.2f} FPS")
                 except ZeroDivisionError:
                     pass
 

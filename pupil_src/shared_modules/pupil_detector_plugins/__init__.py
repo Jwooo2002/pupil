@@ -17,6 +17,8 @@ from version_utils import parse_version
 
 from .detector_2d_plugin import Detector2DPlugin
 from .detector_base_plugin import EVENT_KEY, PupilDetectorPlugin
+# from .dvs_detector_plugin import DVSDetectorPlugin
+
 
 logger = logging.getLogger(__name__)
 
@@ -47,5 +49,7 @@ def available_detector_plugins() -> T.List[T.Type[PupilDetectorPlugin]]:
     else:
         logger.debug("Using refraction corrected 3D pupil detector.")
         all_plugins.append(Pye3DPlugin)
+
+
 
     return all_plugins

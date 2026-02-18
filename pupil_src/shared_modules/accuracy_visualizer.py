@@ -27,6 +27,7 @@ from gaze_mapping.notifications import (
 from gaze_mapping.utils import closest_matches_monocular
 from plugin import Plugin
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -177,7 +178,7 @@ class Accuracy_Visualizer(Plugin):
     def __init__(
         self,
         g_pool,
-        outlier_threshold=5.0,
+        outlier_threshold=2.5,
         vis_mapping_error=True,
         vis_calibration_area=True,
     ):

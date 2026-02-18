@@ -1,4 +1,6 @@
 import os
+os.environ["OMP_NUM_THREADS"] = "4"
+os.environ["MKL_NUM_THREADS"] = "4"
 import platform
 import sys
 

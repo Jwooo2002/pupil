@@ -68,8 +68,8 @@ class DenseNet2D_up_block_concat(nn.Module):
 
     def forward(self,prev_feature_map,x):
         x = nn.functional.interpolate(x,scale_factor=self.up_stride,mode='nearest')
-        print(x.shape)
-        print(prev_feature_map.shape)
+        #print(x.shape)
+        #print(prev_feature_map.shape)
         x = torch.cat((x,prev_feature_map),dim=1)
         if self.dropout:
             x1 = self.relu(self.dropout1(self.conv12(self.conv11(x))))

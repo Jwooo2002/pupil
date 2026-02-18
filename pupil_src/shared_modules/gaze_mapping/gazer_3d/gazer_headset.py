@@ -11,6 +11,7 @@ See COPYING and COPYING.LESSER for license details.
 import abc
 import logging
 import typing as T
+from datetime import time
 
 import cv2
 import math_helper
@@ -29,6 +30,7 @@ from .utils import (
     calculate_nearest_points_to_targets,
     get_eye_cam_pose_in_world,
 )
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -274,6 +276,7 @@ class Model3D_Binocular(Model3D):
         # See Lech Swirski: "Gaze estimation on glasses-based stereoscopic displays"
         # Chapter: 7.4.2 Cyclopean gaze estimate
 
+        # start = time.time()
         # the cyclop is the avg of both lines of sight
         cyclop_normal = (s0_normal + s1_normal) / 2.0
         cyclop_center = (s0_center + s1_center) / 2.0
@@ -295,6 +298,8 @@ class Model3D_Binocular(Model3D):
             nearest_intersection_point,
             intersection_distance,
         ) = math_helper.nearest_intersection(gaze_line0, gaze_line1)
+        # end = time.time()
+        # print(1/(end - start))
 
         if nearest_intersection_point is None:
             return None
@@ -315,13 +320,16 @@ class Model3D_Binocular(Model3D):
             image_point = self.intrinsics.projectPoints(
                 np.array([nearest_intersection_point])
             )
+            tmp = image_point
             image_point = image_point.reshape(-1, 2)
             image_point = normalize(
                 image_point[0], self.intrinsics.resolution, flip_y=True
             )
             image_point = _clamp_norm_point(image_point)
             g["norm_pos"] = image_point
-
+            # print(g)
+            # print(tmp)
+            # print(self.last_gaze_distance)
         return g
 
     def _eye0_to_World(self, p):

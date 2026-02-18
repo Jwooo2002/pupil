@@ -103,7 +103,8 @@ class Pye3DPlugin(PupilDetectorPlugin):
             logger.error(f"Model path {model_path} not found!")
             raise FileNotFoundError(model_path)
 
-        self.model = model_dict[model_name].to(self.device)
+        # self.model = model_dict[model_name].to(self.device)
+        self.model = model_dict[model_name]().to(self.device)
         self.model.load_state_dict(torch.load(model_path))
         self.model.eval()
 
@@ -147,42 +148,42 @@ class Pye3DPlugin(PupilDetectorPlugin):
         # included in the PupilDetectorPlugin base class. This needs some cleaning up.
         pass
 
-    # def detect(self, frame, **kwargs):
-    #     self._process_camera_changes()
-    #
-    #     previous_detection_results = kwargs.get("previous_detection_results", [])
-    #     for datum in previous_detection_results:
-    #         if datum.get("method", "") == "2d c++":
-    #             datum_2d = datum
-    #             break
-    #     else:
-    #         logger.warning(
-    #             "Required 2d pupil detection input not available. "
-    #             "Returning default pye3d datum."
-    #         )
-    #         return self.create_pupil_datum(
-    #             norm_pos=[0.5, 0.5],
-    #             diameter=0.0,
-    #             confidence=0.0,
-    #             timestamp=frame.timestamp,
-    #         )
-    #
-    #     result = self.detector.update_and_detect(
-    #         datum_2d, frame.gray, debug=self.is_debug_window_open
-    #     )
-    #
-    #     norm_pos = normalize(
-    #         result["location"], (frame.width, frame.height), flip_y=True
-    #     )
-    #     template = self.create_pupil_datum(
-    #         norm_pos=norm_pos,
-    #         diameter=result["diameter"],
-    #         confidence=result["confidence"],
-    #         timestamp=frame.timestamp,
-    #     )
-    #     template.update(result)
-    #
-    #     return template
+    def detect(self, frame, **kwargs):
+        self._process_camera_changes()
+
+        previous_detection_results = kwargs.get("previous_detection_results", [])
+        for datum in previous_detection_results:
+            if datum.get("method", "") == "2d c++":
+                datum_2d = datum
+                break
+        else:
+            logger.warning(
+                "Required 2d pupil detection input not available. "
+                "Returning default pye3d datum."
+            )
+            return self.create_pupil_datum(
+                norm_pos=[0.5, 0.5],
+                diameter=0.0,
+                confidence=0.0,
+                timestamp=frame.timestamp,
+            )
+
+        result = self.detector.update_and_detect(
+            datum_2d, frame.gray, debug=self.is_debug_window_open
+        )
+
+        norm_pos = normalize(
+            result["location"], (frame.width, frame.height), flip_y=True
+        )
+        template = self.create_pupil_datum(
+            norm_pos=norm_pos,
+            diameter=result["diameter"],
+            confidence=result["confidence"],
+            timestamp=frame.timestamp,
+        )
+        template.update(result)
+
+        return template
 
     def get_img(self, img: np.ndarray) -> torch.Tensor:
         """

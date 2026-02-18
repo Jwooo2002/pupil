@@ -45,6 +45,7 @@ import PIL
 from pupil_detector_plugins.utils import get_predictions
 from pupil_detector_plugins.models import model_dict
 import torchvision
+import time
 
 COLOR_MAX = 255
 COLOR_CAP = 256
@@ -89,13 +90,7 @@ class Detector2DPlugin(PupilDetectorPlugin):
         super().__init__(g_pool=g_pool)
         self.detector_2d = detector_2d or Detector2D(properties or {})
 
-        # 여기서 EyeSegmentation 모델을 한 번만 초기화
-        # self.model = edgaze.eye_segmentation.EyeSegmentation(
-        #     model_name="eye_net_m",
-        #     model_path="./eye_net_m.pkl",
-        #     device="cuda",
-        #     preview=False
-        # )
+
         model_name = "densenet"
         model_path = "./best_model.pkl"
         device_str = "cuda" if torch.cuda.is_available() else "cpu"
@@ -112,7 +107,7 @@ class Detector2DPlugin(PupilDetectorPlugin):
             logger.error(f"Model path {model_path} not found!")
             raise FileNotFoundError(model_path)
 
-        self.model = model_dict[model_name].to(self.device)
+        self.model = model_dict[model_name]().to(self.device)
         self.model.load_state_dict(torch.load(model_path))
         self.model.eval()
 
@@ -136,11 +131,14 @@ class Detector2DPlugin(PupilDetectorPlugin):
         roi = Roi(*self.g_pool.roi.bounds)
 
         debug_img = frame.bgr if self.g_pool.display_mode == "algorithm" else None
+
+        # start = time.time()
         result = self.detector_2d.detect(
             gray_img=frame.gray,
             color_img=debug_img,
             roi=roi,
         )
+
 
         norm_pos = normalize(
             result["location"], (frame.width, frame.height), flip_y=True
@@ -159,6 +157,8 @@ class Detector2DPlugin(PupilDetectorPlugin):
         datum["ellipse"]["axes"] = result["ellipse"]["axes"]
         datum["ellipse"]["angle"] = result["ellipse"]["angle"]
         datum["ellipse"]["center"] = result["ellipse"]["center"]
+        # end = time.time()
+        # print(end - start)
 
         return datum
 
@@ -312,44 +312,7 @@ class Detector2DPlugin(PupilDetectorPlugin):
 
         return predict
 
-    # def detect_RITnet(self, frame, **kwargs):
-    #     if not isinstance(frame, np.ndarray):
-    #         try:
-    #             frame = self.convert_mjpeg_to_numpy(frame)
-    #         except ValueError as e:
-    #             print(f"Error converting MJPEGFrame: {e}")
-    #             return None
-    #
-    #     # 1) 그레이스케일 변환
-    #     #    (RGB → GRAY, 혹은 BGR → GRAY; 상황에 맞게)
-    #     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    #     # 2) uint8로 맞춤
-    #     gray = gray.astype(np.uint8)
-    #
-    #     # 3) get_img() => 감마 보정 + CLAHE + ToTensor & Normalize
-    #     img_tensor = self.get_img(gray)  # shape=[1, H, W], float32
-    #
-    #     # 4) 배치 차원 추가 (shape => [1, 1, H, W])
-    #     data = img_tensor.unsqueeze(0).to(self.device)
-    #
-    #     # 5) 추론
-    #     with torch.no_grad():
-    #         output = self.model(data)
-    #     # output: shape=[B, ...], 모델 구조에 따라 다름
-    #
-    #     # 6) 세그멘테이션 결과(라벨 맵) 추출
-    #     predict = get_predictions(output)
-    #     # 여기서 predict의 shape 예: [B, H, W]
-    #     # B=1이므로 predict[0] => [H, W]
-    #
-    #     predict = predict[0]  # shape [H, W], 라벨(0~3 등)
-    #
-    #     # 7) 동공 영역 추출
-    #     pupil_mask = self.extract_pupil(predict)
-    #
-    #     # 8) 타원 피팅
-    #     result = self.unproject_single_observation(pupil_mask)
-    #     return result
+
 
 
     def convert_to_builtin(self, obj):
@@ -368,6 +331,7 @@ class Detector2DPlugin(PupilDetectorPlugin):
         else:
             return obj
 
+    #################### Hongik IULab ###################################
     def detect_RITnet(self, frame, **kwargs):
         """
         RITnet으로 동공을 검출하고, 결과를 Pupil Labs datum 형식으로 반환하는 예시.
@@ -385,6 +349,7 @@ class Detector2DPlugin(PupilDetectorPlugin):
                 print(f"Error converting MJPEGFrame: {e}")
                 return None
 
+        start_time = time.time()
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         gray = gray.astype(np.uint8)
 
@@ -393,7 +358,12 @@ class Detector2DPlugin(PupilDetectorPlugin):
         data = img_tensor.unsqueeze(0).to(self.device)  # shape=[1,1,H,W]
 
         with torch.no_grad():
+            # start_time = time.time()
             output = self.model(data)  # 예: shape=[1,4,H,W]
+            # end_time = time.time()
+            # print(1 / (end_time - start_time))
+
+
         predict = get_predictions(output)  # shape=[1,H,W]
         predict_2d = predict[0].cpu().numpy()  # shape=[H,W], 라벨(0..3)
 
@@ -406,6 +376,8 @@ class Detector2DPlugin(PupilDetectorPlugin):
         contours, _ = cv2.findContours(
             pupil_mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE
         )
+        end_time = time.time()
+        print(1/(end_time - start_time))
 
         if not contours:
             # 동공 미검출 -> Pupil Labs 표준 dict
@@ -472,9 +444,8 @@ class Detector2DPlugin(PupilDetectorPlugin):
         datum["ellipse"]["angle"] = result["ellipse"]["angle"]
         datum["ellipse"]["center"] = result["ellipse"]["center"]
 
-
-
         return datum
+    #################################################################
 
     def unproject_single_observation(self, prediction, mask=None, threshold=0.5):
         # try:
