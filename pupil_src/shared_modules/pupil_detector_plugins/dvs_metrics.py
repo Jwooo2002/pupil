@@ -149,21 +149,28 @@ class KLDiscretLoss(nn.Module):
         return loss / num_joints
 
 def decode_batch_sa_simdr(output_x, output_y):
-
-    max_val_x, preds_x = output_x.max(2, keepdim=True)
-    max_val_y, preds_y = output_y.max(2, keepdim=True)
-    output_x  = F.avg_pool1d(output_x, kernel_size=10, stride=1, padding=1)
-    output_y  = F.avg_pool1d(output_y, kernel_size=10, stride=1, padding=1)
-    max_pro_w = torch.softmax(output_x, dim=2)
-    max_pro_h = torch.softmax(output_y, dim=2)
-    x_prob, max_idx = torch.max(max_pro_w, dim=-1)
-    y_prob, max_idx = torch.max(max_pro_h, dim=-1)
+    # Confidence: avg_pool1d smooths the logits before softmax to suppress isolated spikes,
+    # giving a more reliable peak probability estimate.
+    pooled_x = F.avg_pool1d(output_x, kernel_size=10, stride=1, padding=1)
+    pooled_y = F.avg_pool1d(output_y, kernel_size=10, stride=1, padding=1)
+    x_prob, _ = torch.max(torch.softmax(pooled_x, dim=2), dim=-1)
+    y_prob, _ = torch.max(torch.softmax(pooled_y, dim=2), dim=-1)
     prob = x_prob + y_prob
-    output = torch.ones([output_x.size(0), preds_x.size(1), 2])
-    output[:, :, 0] = torch.squeeze(preds_x)/80
-    output[:, :, 1] = torch.squeeze(preds_y)/60
-    output = output.cuda()
-    return output,prob
+
+    # Position: soft-argmax (weighted centroid) on RAW logits.
+    # Using raw logits avoids the bin-index shift introduced by avg_pool1d,
+    # and produces sub-pixel float coordinates without any offset correction.
+    pro_w = torch.softmax(output_x, dim=2)   # (B, seq, 80)
+    pro_h = torch.softmax(output_y, dim=2)   # (B, seq, 60)
+    bins_w = torch.arange(output_x.size(2), dtype=output_x.dtype, device=output_x.device)
+    bins_h = torch.arange(output_y.size(2), dtype=output_y.dtype, device=output_y.device)
+    subpix_x = (pro_w * bins_w).sum(dim=-1)   # (B, seq) in [0, 80)
+    subpix_y = (pro_h * bins_h).sum(dim=-1)   # (B, seq) in [0, 60)
+
+    output = torch.ones([output_x.size(0), output_x.size(1), 2], device=output_x.device)
+    output[:, :, 0] = torch.clamp(subpix_x / 80, 0.0, 1.0)
+    output[:, :, 1] = torch.clamp(subpix_y / 60, 0.0, 1.0)
+    return output, prob
 
 
 

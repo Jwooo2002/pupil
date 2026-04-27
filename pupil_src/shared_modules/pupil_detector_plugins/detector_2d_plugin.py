@@ -377,7 +377,7 @@ class Detector2DPlugin(PupilDetectorPlugin):
             pupil_mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE
         )
         end_time = time.time()
-        print(1/(end_time - start_time))
+        # print(1/(end_time - start_time))
 
         if not contours:
             # 동공 미검출 -> Pupil Labs 표준 dict

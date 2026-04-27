@@ -1,6 +1,8 @@
 import os
 os.environ["OMP_NUM_THREADS"] = "4"
 os.environ["MKL_NUM_THREADS"] = "4"
+# Hybrid DVS BinarRep backend: "numpy" (fast default) or "tonic" (reference-style).
+os.environ.setdefault("PUPIL_HYBRID_BINAREP_BACKEND", "numpy")
 import platform
 import sys
 
