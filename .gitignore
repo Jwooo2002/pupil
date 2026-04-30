@@ -47,6 +47,7 @@ mprofile_*.dat
 .ipynb_checkpoints/
 *.dmg
 *.zip
+benchmark_results/
 deployment/pupil_v*
 deployment/build/
 deployment/dist/
